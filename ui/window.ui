@@ -224,7 +224,7 @@ QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
       <property name="styleSheet">
        <string notr="true">QWidget#widget_checkBox{background-color:rgb(212,212,212);}</string>
       </property>
-      <widget class="QCheckBox" name="checkBox_GC">
+      <widget class="QCheckBox" name="checkBox_G">
        <property name="geometry">
         <rect>
          <x>100</x>
@@ -402,7 +402,7 @@ QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
         <string>出发地：</string>
        </property>
       </widget>
-      <widget class="QTextEdit" name="textEdit_start_2">
+      <widget class="QTextEdit" name="textEdit_from_2">
        <property name="geometry">
         <rect>
          <x>130</x>
@@ -439,7 +439,7 @@ QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
         <string>目的地：</string>
        </property>
       </widget>
-      <widget class="QTextEdit" name="textEdit_end_2">
+      <widget class="QTextEdit" name="textEdit_to_2">
        <property name="geometry">
         <rect>
          <x>350</x>
@@ -625,6 +625,9 @@ QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
       </property>
       <property name="styleSheet">
        <string notr="true">QHeaderView{font:16pt'宋体'}</string>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
       </property>
       <column>
        <property name="text">

@@ -1,8 +1,7 @@
-from typing import Any
-
 import requests
 import json
-from src.utils import exists_txt, read
+from src.utils import exists_txt, read, is_ticket
+
 
 def query_12306(date: str, from_station: str, to_station: str):
 	""""查询12306的余票信息并返回原始数据"""
@@ -79,31 +78,12 @@ def query_ticket(date: str, from_station: str, to_station: str)-> list:
 	else:
 		print("Can't find station_name.txt")
 
-	return data 
+	return data
 
-def is_ticket(tmp_list :list, from_station :str, to_station: str) ->list:
-	"""判断某一车次是否有高级软卧、软卧、硬卧票"""
-	if tmp_list[21] == '有' or tmp_list[23] == '有' or tmp_list[28] == '有':
-		tem_tem = '有'
-	else:
-		if tmp_list[21].isdigit() or tmp_list[23].isdigit() or tmp_list[28].isdigit():
-			tem_tem = '有'
-		else:
-			tem_tem = '无'
-	# 将车票有无信息添加至新的列表
-	newSeat = [tmp_list[3], from_station, to_station, tmp_list[8], tmp_list[9], tmp_list[10], tem_tem]
-	
-	return newSeat
 
-def query_ticket_analysis(date :str, from_station: str, to_station :str, which_day :int):
-	"""查询卧铺卧铺售票数据并分析"""
+def query_ticket_analysis(date :str, from_station: str, to_station :str, ori_list :list, pro_list: list):
+	"""查询卧铺卧铺售票数据并分析处理"""
 	result = query_12306(date, from_station, to_station)
-	today_list = [] # 存放今天的未判断车次座位信息
-	today_train_list = [] # 存放今天的判断后车次座位信息
-	three_list = []
-	three_train_list = []
-	five_list = []
-	five_train_list = []
 
 	if exists_txt('station_name.txt'):
 		stations = eval(read('station_name.txt'))  
@@ -112,33 +92,16 @@ def query_ticket_analysis(date :str, from_station: str, to_station :str, which_d
 				tmp_list = i.split('|') 
 				from_station = list(stations.keys())[list(stations.values()).index(tmp_list[6])]
 				to_station = list(stations.keys())[list(stations.values()).index(tmp_list[7])]
-
 				# 从tmp_list中筛查数据，创建车次座位信息列表
 				seat = [tmp_list[3], from_station, to_station, tmp_list[8], tmp_list[9], tmp_list[10]
 					, tmp_list[21], tmp_list[23], tmp_list[28]]
-				
-				# 判断今天的车次信息
-				if which_day == 1:  
 					# 将高铁(G)、动(D)、C开头的车次，排除
-					if not seat[0].startswith('G') and not seat[0].startswith('D') and not seat[0].startswith('C') :
-						today_list.append(seat)    # 将未判断车次座位信息添加至列表
-						new_seat = is_ticket(tmp_list,from_station,to_station) # 判断某车次是否有票
-						today_train_list.append(new_seat)  # 将判断后的车次座位信息添加至列表
+				if not seat[0].startswith('G') and not seat[0].startswith('D') and not seat[0].startswith('C') :
+					ori_list.append(seat)    # 将未判断车次座位信息添加至列表
+					new_seat = is_ticket(tmp_list, from_station, to_station) # 判断某车次是否有票
+					pro_list.append(new_seat)  # 将判断后的车次座位信息添加至列表
 
-				if which_day == 3:  # 判断三天的车次信息
-					if not seat[0].startswith('G') and not seat[0].startswith('D') and not seat[0].startswith('C') :
-						three_list.append(seat)  
-						new_seat = is_ticket(tmp_list, from_station, to_station)
-						three_train_list.append(new_seat) 
-				if which_day == 5:  # 判断五天的车次信息
-					if not seat[0].startswith('G') and not seat[0].startswith('D') and not seat[0].startswith('C') :
-						five_list.append(seat)  
-						new_seat = is_ticket(tmp_list, from_station, to_station)
-						five_train_list.append(new_seat)
-	
-	
 
-	
 def query_time(station :str) -> tuple[list, list]:
 	"""查询车票起售时间"""
 	station_name_list = []  # 存放站名
