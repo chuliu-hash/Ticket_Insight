@@ -1,17 +1,18 @@
+from src.chart import PlotCanvas
 from ui.window_ui import Ui_MainWindow
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QWidget, QLabel
 from PyQt5.QtGui import QStandardItem, QStandardItemModel, QFont, QColor
 from src.utils import *
-from src.query_request import query_ticket, query_ticket_analysis
+from src.query_request import query_ticket, query_ticket_analysis, query_time
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 	def __init__(self):
 		self.data = []  # 存放车次信息
 		self.type_data = [] # 存放选中类型车次的信息
-		self.today_list = []  # 存放今天的未判断车次座位信息
-		self.today_train_list = []  # 存放今天的判断后车次座位信息
+		self.today_list = []  # 存放今天的未判断车次座位信息（包含三类卧铺有无信息）
+		self.today_train_list = []  # 存放今天的判断后车次座位信息（统一卧铺有无信息）
 		self.three_list = []        # 存放三天后的未判断车次座位信息
 		self.three_train_list = []  # 存放三天后的已判断车次座位信息
 		self.five_list = []         # 存放五天后的未判断车次座位信息
@@ -27,6 +28,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 		self.textEdit_to.setText("杭州")
 		self.textEdit_from_2.setText("合肥")
 		self.textEdit_to_2.setText("杭州")
+
+		self.tabWidget.setCurrentIndex(0)  # 默认显示车票查询
 
 		self.model = QStandardItemModel()  # 创建存储数据的模式
 
@@ -64,6 +67,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 		self.checkBox_Z.stateChanged.connect(self.on_change_Z_display)
 		self.checkBox_K.stateChanged.connect(self.on_change_K_display)
 		self.pushButton_query_2.clicked.connect(self.on_click_query_analysis)
+		self.pushButton_query_3.clicked.connect(self.on_click_query_time)
 
 
 	def on_click_query_display(self):
@@ -131,51 +135,52 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 		"""选中将高铁信息添加到表格并显示，取消选中则将高铁信息移出表格"""
 		if state == Qt.Checked:
 			# 获取高铁信息
-			g_vehicle(self.data, self.type_data)
+			add_vehicle(self.data, self.type_data, "G")
 			# 通过表格显示该车型数据
 			self.displayTable(len(self.type_data), 16, self.type_data)
 		else:
 			# 取消选中状态将移除该数据
-			r_g_vehicle(self.data, self.type_data)
+			remove_vehicle(self.data, self.type_data, "G")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 
 
 	def on_change_D_display(self, state):
 		"""选中将动车信息添加到表格并显示，取消选中则将动车信息移出表格"""
 		if state == Qt.Checked:
-			d_vehicle(self.data, self.type_data)
+			add_vehicle(self.data, self.type_data, "D")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 		else:
-			r_d_vehicle(self.data, self.type_data)
+			remove_vehicle(self.data, self.type_data, "D")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 
 	def on_change_Z_display(self, state):
 		"""选中将直达车信息添加到表格并显示，取消选中则将直达车信息移出表格"""
 		if state == Qt.Checked:
-			z_vehicle(self.data, self.type_data)
+			add_vehicle(self.data, self.type_data, "Z")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 		else:
-			r_z_vehicle(self.data, self.type_data)
+			remove_vehicle(self.data, self.type_data, "Z")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 	def on_change_T_display(self, state):
 		"""选中将特快车信息添加到表格并显示，取消选中则将特快车信息移出表格"""
 		if state == Qt.Checked:
-			t_vehicle(self.data, self.type_data)
+			add_vehicle(self.data, self.type_data, "T")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 		else:
-			r_t_vehicle(self.data, self.type_data)
+			remove_vehicle(self.data, self.type_data, "T")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 
 	def on_change_K_display(self, state):
 		"""选中将快车信息添加到表格并显示，取消选中则将快车信息移出表格"""
 		if state == Qt.Checked:
-			k_vehicle(self.data, self.type_data)
+			add_vehicle(self.data, self.type_data, "K")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 		else:
-			r_k_vehicle(self.data, self.type_data)
+			remove_vehicle(self.data, self.type_data, "K")
 			self.displayTable(len(self.type_data), 16, self.type_data)
 
 	def on_click_query_analysis(self):
+		"""点击按钮发送查询请求，并进行卧铺票售票情况分析"""
 		self.today_list.clear()
 		self.today_train_list.clear()
 		self.three_list.clear()
@@ -242,10 +247,99 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 							item = QTableWidgetItem(self.info_table[row][col])
 							item.setBackground(QColor(85, 170, 0))
 							self.tableWidget.setItem(row, col, item)  # 设置表格显示的内容
+
+				self.show_broken_line()
+
 			else:
 				messageDialog("输入的站名不存在")
 		else:
 			messageDialog('请填写车站名称！')
+
+	def show_broken_line(self):
+		"""显示卧铺车票数量折线图"""
+		train_name_list = []  # 保存所有车次的车次号
+		tickets_number_list = []  # 保存今天，三天后，五天后所有车次的卧铺票数量
+
+		# 遍历车次信息
+		for info in self.info_table:
+			number_list = []  # 临时保存车票数量
+
+			# 统计该车次三天的卧铺票数量
+			ticket_analysis(self.today_list, info, number_list)
+			ticket_analysis(self.three_list, info, number_list)
+			ticket_analysis(self.five_list, info, number_list)
+
+			tickets_number_list.append(number_list)  # 添加车票数量列表
+			train_name_list.append(info[0])  # 添加车次列表
+
+		# 如果有，则删除水平布局中的折线图
+		if self.horizontalLayout.count() != 0:
+			item = self.horizontalLayout.takeAt(0)
+			widget = item.widget()
+			widget.deleteLater()
+
+		# 创建画布对象
+		line = PlotCanvas()
+		line.broken_line(tickets_number_list, train_name_list)  # 调用折线图方法
+		self.horizontalLayout.addWidget(line)  # 将折线图添加至底部水平布局当中
+
+	def on_click_query_time(self):
+		"""点击按钮发送查询请求，查询车票起售时间"""
+
+		if self.gridLayout.count() != 0:
+			# 循环删除网格布局的所有控件
+			while self.gridLayout.count():
+				# 获取第一个控件
+				item = self.gridLayout.takeAt(0)
+				# 删除控件
+				widget = item.widget()
+				widget.deleteLater()
+
+		station = self.lineEdit_from.text()
+		station_time_dict = eval(read('selling_time.txt'))
+		station_name_dict = eval(read('station_name.txt'))
+
+		if station in station_time_dict.keys():
+			station_name_list, station_time_list = query_time(station_name_dict.get(station))
+
+			# 行数标记
+			i = -1
+			for n in range(len(station_name_list)):
+				# 每4个车站换一行
+				x = n % 4
+				# 当x为0的时候设置换行 行数+1
+				if x == 0:
+					i += 1
+				# 创建布局
+				self.widget = QWidget()
+				# 给布局命名
+				self.widget.setObjectName("widget" + str(n))
+				# 设置布局样式
+				self.widget.setStyleSheet('QWidget#' + "widget" + str(n) +
+				"{border:2px solid rgb(175, 175, 175);background-color: rgb(255, 255, 255);}")
+
+				# 创建Qlabel控件用于显示图片 设置控件在QWidget中
+				self.label = QLabel(self.widget)
+				self.label.setAlignment(Qt.AlignCenter)
+				# 设置大小
+				self.label.setGeometry(QRect(10, 10, 210, 65))
+				font = QFont()  # 创建字体对象
+				font.setPointSize(11)  # 设置字体大小
+				font.setBold(True)  # 开启粗体属性
+				font.setWeight(75)  # 设置文字粗细
+				self.label.setFont(font)  # 设置字体
+				self.label.setText(station_name_list[n] + '      ' + station_time_list[n])  # 设置显示站名与起售时间
+				# 把动态创建的widegt布局添加到gridLayout中 i，x分别代表：行数以及每行的第几列
+				self.gridLayout.addWidget(self.widget, i, x)
+
+			# 设置高度为动态高度根据行数确定高度 每行100
+			self.scrollAreaWidgetContents.setMinimumHeight((i + 1) * 100)
+			# 设置网格布局控件动态高度
+			self.gridLayoutWidget.setGeometry(QRect(0, 0, 950, ((i + 1) * 100)))
+
+		else:
+			messageDialog('起售车站中没有该车站名称！')
+
 
 
 

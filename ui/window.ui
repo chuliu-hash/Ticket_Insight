@@ -54,7 +54,7 @@
 QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab_query">
      <property name="font">
@@ -240,7 +240,7 @@ QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
         </font>
        </property>
        <property name="text">
-        <string>GC-高铁</string>
+        <string>G-高铁</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_type">
@@ -695,7 +695,7 @@ QTabWidget#tabWidget{background-color:rgb(212,212,212);}</string>
       <property name="styleSheet">
        <string notr="true">QWidget#widget_time{background-image:url(:/png/time_bg.png)}</string>
       </property>
-      <widget class="QLineEdit" name="lineEdit_start">
+      <widget class="QLineEdit" name="lineEdit_from">
        <property name="geometry">
         <rect>
          <x>110</x>

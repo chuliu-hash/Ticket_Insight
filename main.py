@@ -2,7 +2,6 @@ from src.MainWindow import MainWindow
 from src.utils import exists_txt, messageDialog
 from src.get_station import get_station_name, get_station_time
 from PyQt5.QtWidgets import QApplication
-from src.query_request import query_time
 import sys
 import os
 

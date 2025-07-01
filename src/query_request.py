@@ -106,7 +106,7 @@ def query_time(station :str) -> tuple[list, list]:
 	"""查询车票起售时间"""
 	station_name_list = []  # 存放站名
 	station_time_list = []  # 存放站名对应的起售时间
-	stations = eval(read('selling_time.txt'))
+	station_time_dict = eval(read('selling_time.txt'))
 	url = 'https://www.12306.cn/index/otn/index12306/queryScSname'
 	form_data = {"station_telecode": station}
 	response = requests.post(url, data = form_data)
@@ -116,10 +116,10 @@ def query_time(station :str) -> tuple[list, list]:
 
 	for name in data:  # 遍历查询车站所对应的所有站名
 		name = name[4:]   # 获取中文站名
-		if name in stations.keys():  # 在站名时间文件中，判断是否存在该站名
+		if name in station_time_dict.keys():  # 在站名时间文件中，判断是否存在该站名
 			station_name_list.append(name)  # 有该站名就将站名添加至列表中
 	for name in station_name_list:  # 遍历筛选后的站名
-		time = stations.get(name)  # 通过站名获取对应的起售时间
+		time = station_time_dict.get(name)  # 通过站名获取对应的起售时间
 		station_time_list.append(time)  # 将时间保存至列表
 	return station_name_list, station_time_list 
 
