@@ -333,7 +333,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 				self.gridLayout.addWidget(self.widget, i, x)
 
 			# 设置高度为动态高度根据行数确定高度 每行100
-			self.scrollAreaWidgetContents.setMinimumHeight((i + 1) * 100)
+			self.scrollAreaWidgetContents_2.setMinimumHeight((i + 1) * 100)
 			# 设置网格布局控件动态高度
 			self.gridLayoutWidget.setGeometry(QRect(0, 0, 950, ((i + 1) * 100)))
 
